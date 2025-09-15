@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "31643024372",
+    "project_id": "chaosclinic-hackathon",
+    "storage_bucket": "chaosclinic-hackathon.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:31643024372:android:017864ca173185fb5bd7a1",
+        "android_client_info": {
+          "package_name": "dev.theananta.chaosclinic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDx-qTCOcXCzy1k5OvJSJlznIyeQWIpfX0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
