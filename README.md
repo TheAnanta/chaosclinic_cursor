@@ -2,6 +2,8 @@
 
 > **✅ App Status**: All core screens implemented and verified! The app successfully compiles and runs with a complete authentication flow, onboarding system, and personalized home dashboard. See screenshots below.
 
+> **🚀 APK Releases**: Automated APK builds are now available! Check the [Releases](../../releases) section for the latest Android APK downloads, or see [APK Build Setup](APK_BUILD_SETUP.md) for building your own.
+
 A comprehensive Flutter application for emotional wellbeing, featuring AI assistance, mood tracking, and personalized activities. Built following clean architecture principles with MVVM pattern.
 
 ## 🌟 Features
@@ -192,6 +194,36 @@ dev_dependencies:
 3. Configure Firebase for your project
 4. Run `flutter packages pub run build_runner build` for code generation
 5. Run `flutter run`
+
+## 📱 APK Building & Releases
+
+### Download Ready-to-Install APK
+Check the [Releases](../../releases) section for the latest Android APK files. These are automatically built and signed for easy installation.
+
+### Building Your Own APK
+This repository includes automated APK building with GitHub Actions:
+
+#### Quick Start
+1. **Manual Build**: Go to Actions → "Build and Release APK" → Run workflow
+2. **Tagged Release**: Create and push a git tag (e.g., `git tag v1.0.1 && git push origin v1.0.1`)
+
+#### Setup for Production Signing
+For production-ready APKs, set up signing keys:
+```bash
+# Run the setup helper script
+./setup-apk-signing.sh
+
+# Or follow the detailed guide
+cat APK_BUILD_SETUP.md
+```
+
+Required GitHub Secrets for signed releases:
+- `UPLOAD_KEYSTORE_BASE64`: Base64-encoded release keystore
+- `KEYSTORE_PASSWORD`: Keystore password
+- `KEY_ALIAS`: Key alias (default: "upload")
+- `KEY_PASSWORD`: Key password
+
+See [APK_BUILD_SETUP.md](APK_BUILD_SETUP.md) for detailed instructions.
 
 ## 📋 Implementation Roadmap
 

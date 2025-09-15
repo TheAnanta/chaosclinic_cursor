@@ -142,6 +142,11 @@ tmp/
 temp/
 .tmp/
 
+# APK Build artifacts
+*.apk
+android/app/build.gradle.kts.backup
+android/app/upload-keystore.jks
+
 # Package manager files
 node_modules/
 yarn.lock
