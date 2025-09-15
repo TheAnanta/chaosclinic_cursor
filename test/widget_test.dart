@@ -1,30 +1,36 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:chaosclinic/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+  testWidgets('ChaosClinicApp loads splash screen', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const ChaosClinicApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify that splash screen is displayed
+    expect(find.text('Chaos Clinic'), findsOneWidget);
+    expect(find.text('Your companion for emotional wellbeing'), findsOneWidget);
+    expect(find.text('Loading...'), findsOneWidget);
+    
+    // Verify app icon is displayed
+    expect(find.byIcon(Icons.psychology), findsOneWidget);
+    
+    // Verify loading indicator is displayed
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('SplashScreen displays correct elements', (WidgetTester tester) async {
+    // Build just the splash screen
+    await tester.pumpWidget(
+      const MaterialApp(home: SplashScreen()),
+    );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify all UI elements are present
+    expect(find.text('Chaos Clinic'), findsOneWidget);
+    expect(find.text('Your companion for emotional wellbeing'), findsOneWidget);
+    expect(find.text('Loading...'), findsOneWidget);
+    expect(find.byIcon(Icons.psychology), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }
