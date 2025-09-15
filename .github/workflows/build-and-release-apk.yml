@@ -59,6 +59,17 @@ jobs:
         sed -i "s/version: .*/version: ${VERSION}+${BUILD_NUMBER}/" pubspec.yaml
         echo "Updated version to: ${VERSION}+${BUILD_NUMBER}"
         
+        # Verify the version was updated correctly
+        grep "version:" pubspec.yaml
+        
+    - name: Verify Flutter configuration
+      run: |
+        echo "📋 Current Flutter and project info:"
+        flutter --version
+        flutter doctor --android-licenses || true
+        echo "📦 Dependencies:"
+        flutter pub deps --style=tree | head -20
+        
     - name: Create upload keystore from secret
       if: env.UPLOAD_KEYSTORE_BASE64 != ''
       env:
