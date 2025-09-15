@@ -11,18 +11,13 @@ class EmotionRepositoryImpl implements EmotionRepository {
 
   static const String _collectionPath = 'emotion_logs';
 
-  EmotionRepositoryImpl(
-    this._firestoreService,
-    this._healthPlatformService,
-  );
+  EmotionRepositoryImpl(this._firestoreService, this._healthPlatformService);
 
   @override
   Future<void> addEmotionLog(EmotionLog log) async {
     try {
       // Generate ID if not provided
-      final logWithId = log.id.isEmpty
-          ? log.copyWith(id: _generateId())
-          : log;
+      final logWithId = log.id.isEmpty ? log.copyWith(id: _generateId()) : log;
 
       // Save to Firestore
       await _firestoreService.setDocument(
@@ -68,7 +63,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
   }) async {
     try {
       final cutoffDate = DateTime.now().subtract(Duration(days: days));
-      
+
       final whereClauses = [
         WhereClause(field: 'userId', isEqualTo: userId),
         WhereClause(field: 'timestamp', isGreaterThanOrEqualTo: cutoffDate),
@@ -95,7 +90,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     try {
       await _firestoreService.updateDocument(
         '$_collectionPath/${log.id}',
-        _emotionLogToFirestore(log.copyWith(updatedAt: DateTime.now())),
+        _emotionLogToFirestore(log),
       );
     } catch (e) {
       throw Exception('Failed to update emotion log: $e');
@@ -172,7 +167,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     try {
       // Get logs from last 30 days
       final logs = await getRecentEmotionLogs(userId, days: 30);
-      
+
       if (logs.isEmpty) {
         return {
           'totalLogs': 0,
@@ -185,10 +180,8 @@ class EmotionRepositoryImpl implements EmotionRepository {
 
       // Calculate statistics
       final totalLogs = logs.length;
-      final averageIntensity = logs.fold<double>(
-        0.0,
-        (sum, log) => sum + log.intensity,
-      ) / totalLogs;
+      final averageIntensity =
+          logs.fold<double>(0.0, (sum, log) => sum + log.intensity) / totalLogs;
 
       // Mood distribution
       final moodDistribution = <String, int>{};
@@ -219,22 +212,27 @@ class EmotionRepositoryImpl implements EmotionRepository {
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     final today = DateTime.now();
-    final logDates = sortedLogs
-        .map((log) => DateTime(
-              log.timestamp.year,
-              log.timestamp.month,
-              log.timestamp.day,
-            ))
-        .toSet()
-        .toList()
-      ..sort((a, b) => b.compareTo(a));
+    final logDates =
+        sortedLogs
+            .map(
+              (log) => DateTime(
+                log.timestamp.year,
+                log.timestamp.month,
+                log.timestamp.day,
+              ),
+            )
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
 
     int streak = 0;
     DateTime currentDate = DateTime(today.year, today.month, today.day);
 
     for (final logDate in logDates) {
       if (logDate.isAtSameMomentAs(currentDate) ||
-          logDate.isAtSameMomentAs(currentDate.subtract(const Duration(days: 1)))) {
+          logDate.isAtSameMomentAs(
+            currentDate.subtract(const Duration(days: 1)),
+          )) {
         streak++;
         currentDate = logDate.subtract(const Duration(days: 1));
       } else {
@@ -262,7 +260,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     final timestamp = (data['timestamp'] as Timestamp).toDate();
     data['timestamp'] = timestamp.toIso8601String();
     data['id'] = id;
-    
+
     return EmotionLog.fromJson(data);
   }
 

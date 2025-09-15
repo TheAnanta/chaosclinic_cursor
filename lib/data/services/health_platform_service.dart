@@ -1,26 +1,26 @@
-import '../models/emotion_log.dart';
+import '../../domain/models/emotion_log.dart';
 
 /// Abstract service for health platform integration
 abstract class HealthPlatformService {
   /// Request authorization to access health data
   Future<bool> requestAuthorization();
-  
+
   /// Check if authorization is granted
   Future<bool> hasAuthorization();
-  
+
   /// Write emotion log to health platform
   Future<bool> writeEmotionLog(EmotionLog emotionLog);
-  
+
   /// Get emotional history from health platform
   Future<List<EmotionLog>> getEmotionalHistory({
     DateTime? startDate,
     DateTime? endDate,
     int? limit,
   });
-  
+
   /// Write multiple emotion logs
   Future<bool> writeEmotionLogs(List<EmotionLog> emotionLogs);
-  
+
   /// Get health platform capabilities
   Future<HealthPlatformCapabilities> getCapabilities();
 }
@@ -53,10 +53,10 @@ class HealthPlatformServiceImpl implements HealthPlatformService {
     try {
       // Convert to platform-specific format and write
       final healthData = emotionLog.toHealthPlatformData();
-      
+
       // For iOS: Write to HealthKit StateOfMind
       // For Android: Write to Google Health API
-      
+
       return true; // Placeholder
     } catch (e) {
       return false;
@@ -72,7 +72,7 @@ class HealthPlatformServiceImpl implements HealthPlatformService {
     try {
       // Read emotional state data from health platform
       // Convert back to EmotionLog format
-      
+
       return []; // Placeholder
     } catch (e) {
       return [];

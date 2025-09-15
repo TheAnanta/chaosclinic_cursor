@@ -7,14 +7,14 @@ class AppTheme {
   static const Color primaryVariant = Color(0xFF9AA5FF);
   static const Color secondaryColor = Color(0xFF03DAC6); // Teal accent
   static const Color secondaryVariant = Color(0xFF018786);
-  
+
   // Emotional state colors
   static const Color joyColor = Color(0xFFFFC107); // Warm yellow
   static const Color calmColor = Color(0xFF4CAF50); // Peaceful green
   static const Color sadnessColor = Color(0xFF2196F3); // Gentle blue
   static const Color anxietyColor = Color(0xFFFF9800); // Alert orange
   static const Color angerColor = Color(0xFFF44336); // Strong red
-  
+
   // Neutral colors
   static const Color backgroundColor = Color(0xFFF8F9FA);
   static const Color surfaceColor = Colors.white;
@@ -81,11 +81,9 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: surfaceColor,
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -107,7 +105,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: errorColor),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primaryColor,

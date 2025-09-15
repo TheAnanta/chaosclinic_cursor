@@ -11,7 +11,7 @@ class Challenge with _$Challenge {
     required String subtitle,
     required DateTime date,
     required String iconAssetPath,
-    @FloatRange(0.0, 1.0) @Default(0.0) double progress,
+    @Default(0.0) double progress,
     @Default(ChallengeType.daily) ChallengeType type,
     @Default(ChallengeDifficulty.easy) ChallengeDifficulty difficulty,
     @Default([]) List<String> requirements,
@@ -30,19 +30,9 @@ class Challenge with _$Challenge {
       _$ChallengeFromJson(json);
 }
 
-enum ChallengeType {
-  daily,
-  weekly,
-  monthly,
-  special,
-}
+enum ChallengeType { daily, weekly, monthly, special }
 
-enum ChallengeDifficulty {
-  easy,
-  medium,
-  hard,
-  expert,
-}
+enum ChallengeDifficulty { easy, medium, hard, expert }
 
 /// Extension methods for Challenge
 extension ChallengeExtensions on Challenge {
@@ -82,23 +72,23 @@ extension ChallengeExtensions on Challenge {
   /// Check if challenge is currently active
   bool get isCurrentlyActive {
     if (!isActive) return false;
-    
+
     final now = DateTime.now();
     if (startDate != null && now.isBefore(startDate!)) return false;
     if (endDate != null && now.isAfter(endDate!)) return false;
-    
+
     return true;
   }
 
   /// Get time remaining for challenge
   String get timeRemainingDisplay {
     if (endDate == null) return 'No time limit';
-    
+
     final now = DateTime.now();
     if (now.isAfter(endDate!)) return 'Expired';
-    
+
     final difference = endDate!.difference(now);
-    
+
     if (difference.inDays > 0) {
       return '${difference.inDays}d remaining';
     } else if (difference.inHours > 0) {
@@ -120,10 +110,10 @@ extension ChallengeExtensions on Challenge {
   /// Check if challenge is near deadline (within 24 hours)
   bool get isNearDeadline {
     if (endDate == null) return false;
-    
+
     final now = DateTime.now();
     final difference = endDate!.difference(now);
-    
+
     return difference.inHours <= 24 && difference.inHours > 0;
   }
 }

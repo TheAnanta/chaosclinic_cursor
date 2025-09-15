@@ -9,7 +9,7 @@ class EmotionLog with _$EmotionLog {
     required String id,
     required DateTime timestamp,
     required String mood,
-    @IntRange(1, 5) required int intensity,
+    required int intensity,
     String? note,
     String? userId,
     @Default([]) List<String> tags,
@@ -21,11 +21,7 @@ class EmotionLog with _$EmotionLog {
       _$EmotionLogFromJson(json);
 }
 
-enum EmotionLogType {
-  manual,
-  automated,
-  imported,
-}
+enum EmotionLogType { manual, automated, imported }
 
 /// Extension methods for EmotionLog
 extension EmotionLogExtensions on EmotionLog {

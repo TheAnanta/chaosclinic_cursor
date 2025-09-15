@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../authentication/authentication_view_model.dart';
-import '../onboarding/onboarding_view_model.dart';
-import '../home/home_view_model.dart';
-import '../authentication/authentication_screen.dart';
-import '../onboarding/onboarding_screen.dart';
-import '../home/home_screen.dart';
-import '../../domain/use_cases/submit_onboarding_use_case.dart';
-import '../../domain/use_cases/get_home_screen_data_use_case.dart';
-import '../../domain/use_cases/log_emotion_use_case.dart';
+import 'authentication/authentication_view_model.dart';
+import 'onboarding/onboarding_view_model.dart';
+import 'home/home_view_model.dart';
+import 'authentication/authentication_screen.dart';
+import 'onboarding/onboarding_screen.dart';
+import 'home/home_screen.dart';
+import '../domain/use_cases/submit_onboarding_use_case.dart';
+import '../domain/use_cases/get_home_screen_data_use_case.dart';
+import '../domain/use_cases/log_emotion_use_case.dart';
 
 /// Main app router that manages navigation between authentication, onboarding, and main app
 class AppRouter extends StatelessWidget {
@@ -77,10 +77,7 @@ class _LoadingScreen extends StatelessWidget {
             SizedBox(height: 16),
             Text(
               'Loading...',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 16),
             ),
           ],
         ),
