@@ -6,6 +6,7 @@ import 'home/home_view_model.dart';
 import 'authentication/authentication_screen.dart';
 import 'onboarding/onboarding_screen.dart';
 import 'home/home_screen.dart';
+import 'core/navigation/app_navigation.dart';
 import '../domain/use_cases/submit_onboarding_use_case.dart';
 import '../domain/use_cases/get_home_screen_data_use_case.dart';
 import '../domain/use_cases/log_emotion_use_case.dart';
@@ -51,6 +52,11 @@ class AppRouter extends StatelessWidget {
             context.read<GetHomeScreenDataUseCase>(),
             context.read<LogEmotionUseCase>(),
             user.uid,
+            onNavigateToKanhaChat: () => AppNavigation.navigateToKanhaChat(context, user.uid),
+            onNavigateToActivity: (activityId) => AppNavigation.navigateToActivity(context, activityId),
+            onNavigateToArticle: (articleId) => AppNavigation.navigateToArticle(context, articleId),
+            onNavigateToActivities: () => AppNavigation.navigateToActivities(context),
+            onNavigateToCommunity: () => AppNavigation.navigateToCommunity(context),
           ),
           child: HomeScreen(user: user),
         );

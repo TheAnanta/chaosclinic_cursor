@@ -18,12 +18,22 @@ class HomeViewModel extends ChangeNotifier {
   final GetHomeScreenDataUseCase _getHomeScreenDataUseCase;
   final LogEmotionUseCase _logEmotionUseCase;
   final String userId;
+  final VoidCallback? onNavigateToKanhaChat;
+  final Function(String)? onNavigateToActivity;
+  final Function(String)? onNavigateToArticle;
+  final VoidCallback? onNavigateToActivities;
+  final VoidCallback? onNavigateToCommunity;
 
   HomeViewModel(
     this._getHomeScreenDataUseCase,
     this._logEmotionUseCase,
-    this.userId,
-  ) {
+    this.userId, {
+    this.onNavigateToKanhaChat,
+    this.onNavigateToActivity,
+    this.onNavigateToArticle,
+    this.onNavigateToActivities,
+    this.onNavigateToCommunity,
+  }) {
     _loadHomeData();
   }
 
@@ -105,20 +115,27 @@ class HomeViewModel extends ChangeNotifier {
 
   /// Navigate to specific activity
   void onActivityTapped(Activity activity) {
-    // This would typically navigate to the activity screen
-    debugPrint('Activity tapped: ${activity.title}');
+    onNavigateToActivity?.call(activity.id);
   }
 
   /// Navigate to specific article
   void onArticleTapped(CommunityArticle article) {
-    // This would typically navigate to the article detail screen
-    debugPrint('Article tapped: ${article.title}');
+    onNavigateToArticle?.call(article.id);
   }
 
   /// Navigate to AI chat
   void onAiChatTapped() {
-    // This would typically navigate to the Kanha chat screen
-    debugPrint('AI chat tapped');
+    onNavigateToKanhaChat?.call();
+  }
+
+  /// Navigate to activities dashboard
+  void onActivitiesTapped() {
+    onNavigateToActivities?.call();
+  }
+
+  /// Navigate to community
+  void onCommunityTapped() {
+    onNavigateToCommunity?.call();
   }
 
   /// Navigate to trusted contact

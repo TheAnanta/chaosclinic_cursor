@@ -15,12 +15,15 @@ import '../data/repositories/emotion_repository.dart';
 import '../data/repositories/emotion_repository_impl.dart';
 import '../data/repositories/activity_repository.dart';
 import '../data/repositories/community_repository.dart';
+import '../data/repositories/ai_chat_repository.dart';
+import '../data/repositories/ai_chat_repository_impl.dart';
 
 // Use Cases
 import '../domain/use_cases/log_emotion_use_case.dart';
 import '../domain/use_cases/get_personalized_activity_use_case.dart';
 import '../domain/use_cases/get_home_screen_data_use_case.dart';
 import '../domain/use_cases/submit_onboarding_use_case.dart';
+import '../domain/use_cases/kanha_chat_use_cases.dart';
 
 // Domain Models
 import '../domain/models/activity.dart';
@@ -73,6 +76,9 @@ class DependencyInjection {
       Provider<CommunityRepository>(
         create: (context) => MockCommunityRepository(),
       ),
+      Provider<AiChatRepository>(
+        create: (context) => MockAiChatRepository(),
+      ),
       
       // Use cases
       Provider<LogEmotionUseCase>(
@@ -96,6 +102,23 @@ class DependencyInjection {
       Provider<SubmitOnboardingUseCase>(
         create: (context) => SubmitOnboardingUseCase(
           context.read<UserRepository>(),
+        ),
+      ),
+      
+      // AI Chat Use Cases
+      Provider<SendMessageToKanhaUseCase>(
+        create: (context) => SendMessageToKanhaUseCase(
+          context.read<AiChatRepository>(),
+        ),
+      ),
+      Provider<GetChatHistoryUseCase>(
+        create: (context) => GetChatHistoryUseCase(
+          context.read<AiChatRepository>(),
+        ),
+      ),
+      Provider<GetConversationStartersUseCase>(
+        create: (context) => GetConversationStartersUseCase(
+          context.read<AiChatRepository>(),
         ),
       ),
       

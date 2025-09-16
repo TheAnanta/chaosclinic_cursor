@@ -12,8 +12,12 @@ class AppTheme {
   static const Color joyColor = Color(0xFFFFC107); // Warm yellow
   static const Color calmColor = Color(0xFF4CAF50); // Peaceful green
   static const Color sadnessColor = Color(0xFF2196F3); // Gentle blue
+  static const Color sadColor = Color(0xFF2196F3); // Alias for sadness
   static const Color anxietyColor = Color(0xFFFF9800); // Alert orange
+  static const Color anxiousColor = Color(0xFFFF9800); // Alias for anxiety
   static const Color angerColor = Color(0xFFF44336); // Strong red
+  static const Color relaxColor = Color(0xFF8BC34A); // Light green
+  static const Color successColor = Color(0xFF4CAF50); // Success green
 
   // Neutral colors
   static const Color backgroundColor = Color(0xFFF8F9FA);
