@@ -5,11 +5,13 @@ class WordSearchGame {
   final List<List<String>> grid;
   final List<WordSearchWord> words;
   final int size;
+  final List<String> userWords;
   
   WordSearchGame({
     required this.grid,
     required this.words,
     required this.size,
+    required this.userWords,
   });
 
   /// Check if a word is found at the given positions
@@ -18,6 +20,13 @@ class WordSearchGame {
     
     final word = positions.map((pos) => grid[pos.row][pos.col]).join();
     return words.any((w) => w.text.toLowerCase() == word.toLowerCase());
+  }
+
+  /// Check if current selection forms a valid English word
+  Future<bool> isValidEnglishWord(String word) async {
+    // For now, using a simple check against common English words
+    // In production, this would call a dictionary API
+    return await _checkWordInDictionary(word.toLowerCase());
   }
 
   /// Get the word that matches the given positions
@@ -29,6 +38,25 @@ class WordSearchGame {
       (w) => w.text.toLowerCase() == word.toLowerCase(),
       orElse: () => throw StateError('Word not found'),
     );
+  }
+
+  Future<bool> _checkWordInDictionary(String word) async {
+    // Simple dictionary check - in production this would use a real API
+    final commonWords = [
+      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+      'love', 'happy', 'sad', 'angry', 'calm', 'peace', 'joy', 'hope', 'dream', 'life', 'time',
+      'good', 'bad', 'big', 'small', 'new', 'old', 'high', 'low', 'fast', 'slow', 'hot', 'cold',
+      'cat', 'dog', 'bird', 'fish', 'tree', 'flower', 'sun', 'moon', 'star', 'sky', 'sea', 'river',
+      'book', 'pen', 'paper', 'phone', 'car', 'house', 'door', 'window', 'table', 'chair',
+      'red', 'blue', 'green', 'yellow', 'black', 'white', 'orange', 'purple', 'pink', 'brown',
+      'walk', 'run', 'jump', 'swim', 'fly', 'eat', 'drink', 'sleep', 'wake', 'work', 'play',
+      'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'
+    ];
+    
+    // Simulate API delay
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    return word.length >= 3 && commonWords.contains(word);
   }
 }
 
@@ -67,12 +95,13 @@ class WordSearchGenerator {
   static const int defaultSize = 15;
   static final Random _random = Random();
   
-  /// Generate a new word search puzzle
+  /// Generate a new word search puzzle with user-provided words
   static WordSearchGame generate({
     int size = defaultSize,
     List<String>? customWords,
   }) {
-    final words = customWords ?? _getDefaultWords();
+    final userProvidedWords = customWords ?? [];
+    final words = userProvidedWords.isNotEmpty ? userProvidedWords : _getDefaultWords();
     final grid = List.generate(size, (_) => List.filled(size, ''));
     final placedWords = <WordSearchWord>[];
     
@@ -95,6 +124,7 @@ class WordSearchGenerator {
       grid: grid,
       words: placedWords,
       size: size,
+      userWords: userProvidedWords,
     );
   }
   

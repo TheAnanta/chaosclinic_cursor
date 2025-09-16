@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 enum MeditationState {
   initial,
@@ -64,6 +65,11 @@ class MeditationViewModel extends ChangeNotifier {
   bool _breathingIn = true;
   Timer? _breathingTimer;
   
+  // Audio player for Body Scan meditation
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool _isAudioPlaying = false;
+  bool _isAudioLoading = false;
+  
   // Getters
   MeditationState get state => _state;
   MeditationSession? get currentSession => _currentSession;
@@ -71,6 +77,8 @@ class MeditationViewModel extends ChangeNotifier {
   Duration get stepTimeRemaining => _stepTimeRemaining;
   Duration get totalTimeRemaining => _totalTimeRemaining;
   bool get breathingIn => _breathingIn;
+  bool get isAudioPlaying => _isAudioPlaying;
+  bool get isAudioLoading => _isAudioLoading;
   
   MeditationStep? get currentStep => 
       _currentSession != null && _currentStepIndex < _currentSession!.steps.length
@@ -131,6 +139,10 @@ class MeditationViewModel extends ChangeNotifier {
         _startBreathingGuide();
       }
       
+      if (_currentSession!.type == MeditationType.bodyScroll && _isAudioPlaying) {
+        _audioPlayer.resume();
+      }
+      
       notifyListeners();
     }
   }
@@ -140,6 +152,8 @@ class MeditationViewModel extends ChangeNotifier {
     _state = MeditationState.completed;
     _timer?.cancel();
     _breathingTimer?.cancel();
+    _audioPlayer.stop();
+    _isAudioPlaying = false;
     notifyListeners();
   }
   
@@ -179,10 +193,49 @@ class MeditationViewModel extends ChangeNotifier {
     });
   }
   
+  /// Play Body Scan background audio
+  Future<void> _playBodyScanAudio() async {
+    try {
+      _isAudioLoading = true;
+      notifyListeners();
+      
+      // Example MP3 URL - in production this would be a proper relaxation audio
+      const audioUrl = 'https://www.soundjay.com/misc/sounds/rain-03.mp3';
+      
+      await _audioPlayer.play(UrlSource(audioUrl));
+      _isAudioPlaying = true;
+      _isAudioLoading = false;
+      
+      // Set to loop for continuous background audio
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+      
+      notifyListeners();
+    } catch (e) {
+      _isAudioLoading = false;
+      _isAudioPlaying = false;
+      notifyListeners();
+      // In production, you would handle this error appropriately
+    }
+  }
+  
+  /// Toggle audio playback for Body Scan meditation
+  Future<void> toggleAudio() async {
+    if (_isAudioPlaying) {
+      await _audioPlayer.pause();
+      _isAudioPlaying = false;
+    } else {
+      if (_currentSession?.type == MeditationType.bodyScroll) {
+        await _playBodyScanAudio();
+      }
+    }
+    notifyListeners();
+  }
+  
   @override
   void dispose() {
     _timer?.cancel();
     _breathingTimer?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
   }
 }

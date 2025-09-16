@@ -46,20 +46,46 @@ enum BugType {
 class BugSmashGame {
   static final Random _random = Random();
   
-  static Bug generateRandomBug(Size screenSize) {
+  static Bug generateRandomBug(Size screenSize, [List<Bug>? existingBugs]) {
     final bugTypes = BugType.values;
     final type = bugTypes[_random.nextInt(bugTypes.length)];
+    const bugSize = 60.0; // Bug diameter
+    const minDistance = 80.0; // Minimum distance between bugs
+    
+    Offset position;
+    int attempts = 0;
+    const maxAttempts = 50;
+    
+    do {
+      position = Offset(
+        _random.nextDouble() * (screenSize.width - bugSize),
+        _random.nextDouble() * (screenSize.height - 200), // Account for UI
+      );
+      attempts++;
+    } while (attempts < maxAttempts && 
+             existingBugs != null && 
+             _hasCollision(position, existingBugs, minDistance));
     
     return Bug(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      position: Offset(
-        _random.nextDouble() * (screenSize.width - 60), // 60 is bug size
-        _random.nextDouble() * (screenSize.height - 200), // Account for UI
-      ),
+      position: position,
       speed: _random.nextDouble() * 2 + 1, // Speed between 1-3
       type: type,
       color: _getBugColor(type),
     );
+  }
+  
+  /// Check if a position would collide with existing bugs
+  static bool _hasCollision(Offset newPosition, List<Bug> existingBugs, double minDistance) {
+    for (final bug in existingBugs) {
+      if (bug.isSmashed) continue;
+      
+      final distance = (newPosition - bug.position).distance;
+      if (distance < minDistance) {
+        return true;
+      }
+    }
+    return false;
   }
   
   static Color _getBugColor(BugType type) {

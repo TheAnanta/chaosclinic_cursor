@@ -7,6 +7,7 @@ import 'word_search_game.dart';
 
 enum WordSearchGameState {
   initial,
+  wordInput, // New state for user word input
   playing,
   paused,
   completed,
@@ -18,47 +19,82 @@ class WordSearchViewModel extends ChangeNotifier {
   WordSearchGame? _game;
   WordSearchGameState _state = WordSearchGameState.initial;
   
-  // Game state
-  final Stopwatch _stopwatch = Stopwatch();
-  Timer? _timer;
-  Duration _elapsedTime = Duration.zero;
+  // Game timing - countdown instead of elapsed time
+  Timer? _countdownTimer;
+  Duration _timeRemaining = const Duration(seconds: 30); // 30 second countdown
+  static const Duration _initialCountdown = Duration(seconds: 30);
   
   // Selection state
   List<GridPosition> _currentSelection = [];
   List<GridPosition> _selectedPositions = [];
   Set<GridPosition> _foundPositions = {};
+  Set<GridPosition> _highlightedPositions = {}; // For highlighting during selection
   
   // Score and progress
   int _score = 0;
   int _hintsUsed = 0;
   int _wrongSelections = 0;
   
-  // Proactive check-in system
-  Timer? _checkInTimer;
-  bool _hasShownCheckIn = false;
-  static const Duration _checkInThreshold = Duration(seconds: 90);
-  static const int _wrongSelectionThreshold = 5;
+  // Inactivity detection
+  Timer? _inactivityTimer;
+  DateTime _lastActivity = DateTime.now();
+  bool _hasShown10sPopup = false;
+  bool _hasShown20sPopup = false;
+  
+  // Current word being formed during selection
+  String _currentWord = '';
+  bool _isValidatingWord = false;
+  
+  // User word input
+  final List<String> _userWords = [];
+  final TextEditingController wordInputController = TextEditingController();
 
   // Getters
   WordSearchGame? get game => _game;
   WordSearchGameState get state => _state;
-  Duration get elapsedTime => _elapsedTime;
+  Duration get timeRemaining => _timeRemaining;
   List<GridPosition> get currentSelection => _currentSelection;
   Set<GridPosition> get foundPositions => _foundPositions;
+  Set<GridPosition> get highlightedPositions => _highlightedPositions;
   int get score => _score;
   int get hintsUsed => _hintsUsed;
   int get wrongSelections => _wrongSelections;
   bool get isGameCompleted => _game?.words.every((word) => word.isFound) ?? false;
   int get wordsFound => _game?.words.where((word) => word.isFound).length ?? 0;
   int get totalWords => _game?.words.length ?? 0;
+  String get currentWord => _currentWord;
+  bool get isValidatingWord => _isValidatingWord;
+  List<String> get userWords => _userWords;
 
-  /// Start a new game
+  /// Show word input dialog for user to choose words
+  void showWordInput() {
+    _state = WordSearchGameState.wordInput;
+    notifyListeners();
+  }
+
+  /// Add a user word
+  void addUserWord(String word) {
+    if (word.trim().isNotEmpty && word.trim().length >= 3) {
+      _userWords.add(word.trim().toUpperCase());
+      wordInputController.clear();
+      notifyListeners();
+    }
+  }
+
+  /// Remove a user word
+  void removeUserWord(String word) {
+    _userWords.remove(word);
+    notifyListeners();
+  }
+
+  /// Start a new game with user-chosen words or defaults
   void startNewGame({List<String>? customWords}) {
-    _game = WordSearchGenerator.generate(customWords: customWords);
+    final wordsToUse = _userWords.isNotEmpty ? _userWords : customWords;
+    _game = WordSearchGenerator.generate(customWords: wordsToUse);
     _state = WordSearchGameState.playing;
     _resetGameState();
-    _startTimer();
-    _startCheckInTimer();
+    _startCountdown();
+    _startInactivityTimer();
     notifyListeners();
   }
 
@@ -66,9 +102,8 @@ class WordSearchViewModel extends ChangeNotifier {
   void pauseGame() {
     if (_state == WordSearchGameState.playing) {
       _state = WordSearchGameState.paused;
-      _stopwatch.stop();
-      _timer?.cancel();
-      _checkInTimer?.cancel();
+      _countdownTimer?.cancel();
+      _inactivityTimer?.cancel();
       notifyListeners();
     }
   }
@@ -77,8 +112,8 @@ class WordSearchViewModel extends ChangeNotifier {
   void resumeGame() {
     if (_state == WordSearchGameState.paused) {
       _state = WordSearchGameState.playing;
-      _startTimer();
-      _startCheckInTimer();
+      _startCountdown();
+      _startInactivityTimer();
       notifyListeners();
     }
   }
@@ -87,7 +122,10 @@ class WordSearchViewModel extends ChangeNotifier {
   void startSelection(GridPosition position) {
     if (_state != WordSearchGameState.playing) return;
     
+    _recordActivity();
     _currentSelection = [position];
+    _highlightedPositions = {position};
+    _currentWord = _game!.grid[position.row][position.col];
     notifyListeners();
   }
 
@@ -95,14 +133,53 @@ class WordSearchViewModel extends ChangeNotifier {
   void updateSelection(GridPosition position) {
     if (_state != WordSearchGameState.playing || _currentSelection.isEmpty) return;
     
+    _recordActivity();
     final startPos = _currentSelection.first;
     _currentSelection = _getPathBetween(startPos, position);
+    _highlightedPositions = _currentSelection.toSet();
+    _currentWord = _currentSelection.map((pos) => _game!.grid[pos.row][pos.col]).join();
     notifyListeners();
   }
 
-  /// End selection
-  void endSelection() {
+  /// End selection and validate word
+  void endSelection() async {
     if (_state != WordSearchGameState.playing || _currentSelection.isEmpty) return;
+    
+    _recordActivity();
+    
+    // Check if word is in our predefined list first
+    final foundWord = _checkWordFound();
+    if (foundWord != null) {
+      _markWordAsFound(foundWord);
+      _score += _calculateScore(foundWord);
+      
+      if (isGameCompleted) {
+        _completeGame();
+      }
+    } else if (_currentWord.length >= 3) {
+      // Check if it's a valid English word
+      _isValidatingWord = true;
+      notifyListeners();
+      
+      final isValid = await _game!.isValidEnglishWord(_currentWord);
+      _isValidatingWord = false;
+      
+      if (isValid) {
+        // Valid English word but not in our list - give partial points
+        _score += _currentWord.length * 2;
+        _foundPositions.addAll(_currentSelection);
+      } else {
+        _wrongSelections++;
+      }
+    } else {
+      _wrongSelections++;
+    }
+    
+    _currentSelection = [];
+    _highlightedPositions = {};
+    _currentWord = '';
+    notifyListeners();
+  }
     
     final foundWord = _checkWordFound();
     if (foundWord != null) {
@@ -166,52 +243,71 @@ class WordSearchViewModel extends ChangeNotifier {
 
   /// Reset game state
   void _resetGameState() {
-    _stopwatch.reset();
-    _elapsedTime = Duration.zero;
+    _timeRemaining = _initialCountdown;
     _currentSelection = [];
     _selectedPositions = [];
     _foundPositions = {};
+    _highlightedPositions = {};
     _score = 0;
     _hintsUsed = 0;
     _wrongSelections = 0;
-    _hasShownCheckIn = false;
-    _timer?.cancel();
-    _checkInTimer?.cancel();
+    _hasShown10sPopup = false;
+    _hasShown20sPopup = false;
+    _currentWord = '';
+    _isValidatingWord = false;
+    _lastActivity = DateTime.now();
+    _countdownTimer?.cancel();
+    _inactivityTimer?.cancel();
   }
 
-  /// Start game timer
-  void _startTimer() {
-    _stopwatch.start();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _elapsedTime = _stopwatch.elapsed;
-      notifyListeners();
+  /// Start countdown timer (30 seconds)
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_timeRemaining.inSeconds > 0) {
+        _timeRemaining = Duration(seconds: _timeRemaining.inSeconds - 1);
+        notifyListeners();
+      } else {
+        _endGameTimeout();
+      }
     });
   }
 
-  /// Start check-in timer
-  void _startCheckInTimer() {
-    _checkInTimer?.cancel();
-    
-    if (!_hasShownCheckIn) {
-      _checkInTimer = Timer(_checkInThreshold, () {
-        _showCheckInDialog();
-      });
-    }
+  /// Start inactivity detection timer
+  void _startInactivityTimer() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final now = DateTime.now();
+      final inactiveFor = now.difference(_lastActivity);
+      
+      if (inactiveFor.inSeconds >= 10 && !_hasShown10sPopup) {
+        _hasShown10sPopup = true;
+        _showInactivityPopup("Take your time! You're doing great.");
+      } else if (inactiveFor.inSeconds >= 20 && !_hasShown20sPopup) {
+        _hasShown20sPopup = true;
+        _showInactivityPopup("Need a hint? Or just enjoying the puzzle?");
+      }
+    });
   }
 
-  /// Show proactive check-in dialog
-  void _showCheckInDialog() {
-    if (_state == WordSearchGameState.playing) {
-      _state = WordSearchGameState.checkinDialog;
-      notifyListeners();
-    }
+  /// Record user activity
+  void _recordActivity() {
+    _lastActivity = DateTime.now();
   }
 
-  /// Check for proactive check-in triggers
-  void _checkForProactiveCheckIn() {
-    if (!_hasShownCheckIn && _wrongSelections >= _wrongSelectionThreshold) {
-      _showCheckInDialog();
-    }
+  /// Show inactivity popup
+  void _showInactivityPopup(String message) {
+    // This would show a brief overlay message
+    // For now, we'll just increment score as encouragement
+    _score += 5;
+    notifyListeners();
+  }
+
+  /// End game due to timeout
+  void _endGameTimeout() {
+    _state = WordSearchGameState.completed;
+    _countdownTimer?.cancel();
+    _inactivityTimer?.cancel();
+    notifyListeners();
   }
 
   /// Get path between two positions (for line selection)
@@ -270,8 +366,8 @@ class WordSearchViewModel extends ChangeNotifier {
   int _calculateScore(WordSearchWord word) {
     var baseScore = word.text.length * 10;
     
-    // Bonus for speed (less time = more bonus)
-    final timeBonus = math.max(0, 60 - _elapsedTime.inSeconds);
+    // Bonus for time remaining (more time left = more bonus)
+    final timeBonus = _timeRemaining.inSeconds;
     
     // Penalty for hints
     final hintPenalty = _hintsUsed * 5;
@@ -282,18 +378,18 @@ class WordSearchViewModel extends ChangeNotifier {
   /// Complete the game
   void _completeGame() {
     _state = WordSearchGameState.completed;
-    _stopwatch.stop();
-    _timer?.cancel();
-    _checkInTimer?.cancel();
+    _countdownTimer?.cancel();
+    _inactivityTimer?.cancel();
     
     // Add completion bonus
-    _score += 50;
+    _score += 50 + _timeRemaining.inSeconds; // Bonus for time remaining
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
-    _checkInTimer?.cancel();
+    _countdownTimer?.cancel();
+    _inactivityTimer?.cancel();
+    wordInputController.dispose();
     super.dispose();
   }
 }

@@ -75,6 +75,9 @@ dependencies:
   shimmer: ^3.0.0
   fl_chart: ^0.69.0
 
+  # Audio & Media
+  audioplayers: ^6.1.0
+
   # Navigation
   go_router: ^14.2.7
   

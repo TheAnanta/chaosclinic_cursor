@@ -333,6 +333,12 @@ class _MeditationContent extends StatelessWidget {
               ),
             ),
             
+            // Audio controls for Body Scan meditation
+            if (session.type == MeditationType.bodyScroll) ...[
+              const SizedBox(height: AppTheme.spacingM),
+              _buildAudioControls(viewModel),
+            ],
+            
             if (viewModel.state == MeditationState.paused) ...[
               const SizedBox(height: AppTheme.spacingL),
               const Text(
@@ -494,6 +500,59 @@ class _MeditationContent extends StatelessWidget {
       case MeditationType.loving_kindness:
         return Icons.favorite;
     }
+  }
+
+  Widget _buildAudioControls(MeditationViewModel viewModel) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.spacingL,
+        vertical: AppTheme.spacingM,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusL),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.music_note,
+            color: Colors.white,
+            size: 20,
+          ),
+          const SizedBox(width: AppTheme.spacingS),
+          const Text(
+            'Background Audio',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingM),
+          if (viewModel.isAudioLoading)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+          else
+            IconButton(
+              onPressed: viewModel.toggleAudio,
+              icon: Icon(
+                viewModel.isAudioPlaying ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   String _formatDuration(Duration duration) {
