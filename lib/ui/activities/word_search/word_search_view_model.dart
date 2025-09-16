@@ -243,52 +243,71 @@ class WordSearchViewModel extends ChangeNotifier {
 
   /// Reset game state
   void _resetGameState() {
-    _stopwatch.reset();
-    _elapsedTime = Duration.zero;
+    _timeRemaining = _initialCountdown;
     _currentSelection = [];
     _selectedPositions = [];
     _foundPositions = {};
+    _highlightedPositions = {};
     _score = 0;
     _hintsUsed = 0;
     _wrongSelections = 0;
-    _hasShownCheckIn = false;
-    _timer?.cancel();
-    _checkInTimer?.cancel();
+    _hasShown10sPopup = false;
+    _hasShown20sPopup = false;
+    _currentWord = '';
+    _isValidatingWord = false;
+    _lastActivity = DateTime.now();
+    _countdownTimer?.cancel();
+    _inactivityTimer?.cancel();
   }
 
-  /// Start game timer
-  void _startTimer() {
-    _stopwatch.start();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _elapsedTime = _stopwatch.elapsed;
-      notifyListeners();
+  /// Start countdown timer (30 seconds)
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_timeRemaining.inSeconds > 0) {
+        _timeRemaining = Duration(seconds: _timeRemaining.inSeconds - 1);
+        notifyListeners();
+      } else {
+        _endGameTimeout();
+      }
     });
   }
 
-  /// Start check-in timer
-  void _startCheckInTimer() {
-    _checkInTimer?.cancel();
-    
-    if (!_hasShownCheckIn) {
-      _checkInTimer = Timer(_checkInThreshold, () {
-        _showCheckInDialog();
-      });
-    }
+  /// Start inactivity detection timer
+  void _startInactivityTimer() {
+    _inactivityTimer?.cancel();
+    _inactivityTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final now = DateTime.now();
+      final inactiveFor = now.difference(_lastActivity);
+      
+      if (inactiveFor.inSeconds >= 10 && !_hasShown10sPopup) {
+        _hasShown10sPopup = true;
+        _showInactivityPopup("Take your time! You're doing great.");
+      } else if (inactiveFor.inSeconds >= 20 && !_hasShown20sPopup) {
+        _hasShown20sPopup = true;
+        _showInactivityPopup("Need a hint? Or just enjoying the puzzle?");
+      }
+    });
   }
 
-  /// Show proactive check-in dialog
-  void _showCheckInDialog() {
-    if (_state == WordSearchGameState.playing) {
-      _state = WordSearchGameState.checkinDialog;
-      notifyListeners();
-    }
+  /// Record user activity
+  void _recordActivity() {
+    _lastActivity = DateTime.now();
   }
 
-  /// Check for proactive check-in triggers
-  void _checkForProactiveCheckIn() {
-    if (!_hasShownCheckIn && _wrongSelections >= _wrongSelectionThreshold) {
-      _showCheckInDialog();
-    }
+  /// Show inactivity popup
+  void _showInactivityPopup(String message) {
+    // This would show a brief overlay message
+    // For now, we'll just increment score as encouragement
+    _score += 5;
+    notifyListeners();
+  }
+
+  /// End game due to timeout
+  void _endGameTimeout() {
+    _state = WordSearchGameState.completed;
+    _countdownTimer?.cancel();
+    _inactivityTimer?.cancel();
+    notifyListeners();
   }
 
   /// Get path between two positions (for line selection)
@@ -347,8 +366,8 @@ class WordSearchViewModel extends ChangeNotifier {
   int _calculateScore(WordSearchWord word) {
     var baseScore = word.text.length * 10;
     
-    // Bonus for speed (less time = more bonus)
-    final timeBonus = math.max(0, 60 - _elapsedTime.inSeconds);
+    // Bonus for time remaining (more time left = more bonus)
+    final timeBonus = _timeRemaining.inSeconds;
     
     // Penalty for hints
     final hintPenalty = _hintsUsed * 5;
@@ -359,18 +378,18 @@ class WordSearchViewModel extends ChangeNotifier {
   /// Complete the game
   void _completeGame() {
     _state = WordSearchGameState.completed;
-    _stopwatch.stop();
-    _timer?.cancel();
-    _checkInTimer?.cancel();
+    _countdownTimer?.cancel();
+    _inactivityTimer?.cancel();
     
     // Add completion bonus
-    _score += 50;
+    _score += 50 + _timeRemaining.inSeconds; // Bonus for time remaining
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
-    _checkInTimer?.cancel();
+    _countdownTimer?.cancel();
+    _inactivityTimer?.cancel();
+    wordInputController.dispose();
     super.dispose();
   }
 }
