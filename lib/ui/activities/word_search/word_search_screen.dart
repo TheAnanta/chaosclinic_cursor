@@ -13,7 +13,7 @@ class WordSearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => WordSearchViewModel()..startNewGame(),
+      create: (context) => WordSearchViewModel(),
       child: const _WordSearchContent(),
     );
   }
@@ -69,9 +69,14 @@ class _WordSearchContent extends StatelessWidget {
             Expanded(
               child: _buildGameArea(context, viewModel),
             ),
-            _buildWordsList(context, viewModel),
+            if (viewModel.state == WordSearchGameState.playing)
+              _buildWordsList(context, viewModel),
           ],
         ),
+        if (viewModel.state == WordSearchGameState.wordInput)
+          _buildWordInputDialog(context, viewModel),
+        if (viewModel.state == WordSearchGameState.initial)
+          _buildWelcomeDialog(context, viewModel),
         if (viewModel.state == WordSearchGameState.checkinDialog)
           _buildCheckInDialog(context, viewModel),
         if (viewModel.state == WordSearchGameState.completed)
@@ -493,6 +498,149 @@ class _WordSearchContent extends StatelessWidget {
                   backgroundColor: AppTheme.primaryColor,
                 ),
                 child: const Text('Resume'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWelcomeDialog(BuildContext context, WordSearchViewModel viewModel) {
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.all(AppTheme.spacingL),
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.search,
+                color: AppTheme.primaryColor,
+                size: 48,
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+              const Text(
+                'Word Search Puzzle',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+              const Text(
+                'Find words by dragging from the first letter to the last letter. '
+                'You can choose your own words or use our default collection!',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppTheme.spacingL),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => viewModel.startNewGame(),
+                      child: const Text('Use Default Words'),
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.spacingM),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => viewModel.showWordInput(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                      ),
+                      child: const Text('Choose My Words'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWordInputDialog(BuildContext context, WordSearchViewModel viewModel) {
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.all(AppTheme.spacingL),
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Choose Your Words',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+              const Text(
+                'Add words you want to find in the puzzle (minimum 3 letters each):',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+              TextField(
+                controller: viewModel.wordInputController,
+                decoration: const InputDecoration(
+                  hintText: 'Enter a word...',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (value) => viewModel.addUserWord(value),
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+              ElevatedButton(
+                onPressed: () => viewModel.addUserWord(viewModel.wordInputController.text),
+                child: const Text('Add Word'),
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+              if (viewModel.userWords.isNotEmpty) ...[
+                const Text('Your Words:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: AppTheme.spacingS),
+                Wrap(
+                  spacing: 8,
+                  children: viewModel.userWords.map((word) => Chip(
+                    label: Text(word),
+                    onDeleted: () => viewModel.removeUserWord(word),
+                  )).toList(),
+                ),
+                const SizedBox(height: AppTheme.spacingM),
+              ],
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => viewModel.startNewGame(),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: AppTheme.spacingM),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: viewModel.userWords.isNotEmpty 
+                          ? () => viewModel.startNewGame()
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                      ),
+                      child: const Text('Start Game'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
