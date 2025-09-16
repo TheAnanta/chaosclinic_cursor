@@ -7,6 +7,7 @@ import 'word_search_game.dart';
 
 enum WordSearchGameState {
   initial,
+  wordInput, // New state for user word input
   playing,
   paused,
   completed,
@@ -18,45 +19,84 @@ class WordSearchViewModel extends ChangeNotifier {
   WordSearchGame? _game;
   WordSearchGameState _state = WordSearchGameState.initial;
   
-  // Game state
-  final Stopwatch _stopwatch = Stopwatch();
-  Timer? _timer;
-  Duration _elapsedTime = Duration.zero;
+  // Game timing - countdown instead of elapsed time
+  Timer? _countdownTimer;
+  Duration _timeRemaining = const Duration(seconds: 30); // 30 second countdown
+  static const Duration _initialCountdown = Duration(seconds: 30);
   
   // Selection state
   List<GridPosition> _currentSelection = [];
   List<GridPosition> _selectedPositions = [];
   Set<GridPosition> _foundPositions = {};
+  Set<GridPosition> _highlightedPositions = {}; // For highlighting during selection
   
   // Score and progress
   int _score = 0;
   int _hintsUsed = 0;
   int _wrongSelections = 0;
   
-  // Proactive check-in system
-  Timer? _checkInTimer;
-  bool _hasShownCheckIn = false;
-  static const Duration _checkInThreshold = Duration(seconds: 90);
-  static const int _wrongSelectionThreshold = 5;
+  // Inactivity detection
+  Timer? _inactivityTimer;
+  DateTime _lastActivity = DateTime.now();
+  bool _hasShown10sPopup = false;
+  bool _hasShown20sPopup = false;
+  
+  // Current word being formed during selection
+  String _currentWord = '';
+  bool _isValidatingWord = false;
+  
+  // User word input
+  final List<String> _userWords = [];
+  final TextEditingController wordInputController = TextEditingController();
 
   // Getters
   WordSearchGame? get game => _game;
   WordSearchGameState get state => _state;
-  Duration get elapsedTime => _elapsedTime;
+  Duration get timeRemaining => _timeRemaining;
   List<GridPosition> get currentSelection => _currentSelection;
   Set<GridPosition> get foundPositions => _foundPositions;
+  Set<GridPosition> get highlightedPositions => _highlightedPositions;
   int get score => _score;
   int get hintsUsed => _hintsUsed;
   int get wrongSelections => _wrongSelections;
   bool get isGameCompleted => _game?.words.every((word) => word.isFound) ?? false;
   int get wordsFound => _game?.words.where((word) => word.isFound).length ?? 0;
   int get totalWords => _game?.words.length ?? 0;
+  String get currentWord => _currentWord;
+  bool get isValidatingWord => _isValidatingWord;
+  List<String> get userWords => _userWords;
 
-  /// Start a new game
+  /// Show word input dialog for user to choose words
+  void showWordInput() {
+    _state = WordSearchGameState.wordInput;
+    notifyListeners();
+  }
+
+  /// Add a user word
+  void addUserWord(String word) {
+    if (word.trim().isNotEmpty && word.trim().length >= 3) {
+      _userWords.add(word.trim().toUpperCase());
+      wordInputController.clear();
+      notifyListeners();
+    }
+  }
+
+  /// Remove a user word
+  void removeUserWord(String word) {
+    _userWords.remove(word);
+    notifyListeners();
+  }
+
+  /// Start a new game with user-chosen words or defaults
   void startNewGame({List<String>? customWords}) {
-    _game = WordSearchGenerator.generate(customWords: customWords);
+    final wordsToUse = _userWords.isNotEmpty ? _userWords : customWords;
+    _game = WordSearchGenerator.generate(customWords: wordsToUse);
     _state = WordSearchGameState.playing;
     _resetGameState();
+    _startCountdown();
+    _startInactivityTimer();
+    notifyListeners();
+  }
     _startTimer();
     _startCheckInTimer();
     notifyListeners();
