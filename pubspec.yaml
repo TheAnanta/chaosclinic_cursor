@@ -85,6 +85,9 @@ dependencies:
   connectivity_plus: ^6.0.5
   package_info_plus: ^8.0.2
   
+  # AI Integration
+  google_generative_ai: ^0.4.6
+  
   # Development & Debugging
   logger: ^2.4.0
 
