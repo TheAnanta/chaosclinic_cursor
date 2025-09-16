@@ -7,6 +7,7 @@ import 'package:provider/single_child_widget.dart';
 import '../data/services/authentication_service.dart';
 import '../data/services/firestore_service.dart';
 import '../data/services/health_platform_service.dart';
+import '../data/services/gemini_ai_service.dart';
 
 // Repositories
 import '../data/repositories/user_repository.dart';
@@ -17,6 +18,10 @@ import '../data/repositories/activity_repository.dart';
 import '../data/repositories/community_repository.dart';
 import '../data/repositories/ai_chat_repository.dart';
 import '../data/repositories/ai_chat_repository_impl.dart';
+import '../data/repositories/gemini_ai_chat_repository.dart';
+
+// Configuration
+import '../core/config/ai_config.dart';
 
 // Use Cases
 import '../domain/use_cases/log_emotion_use_case.dart';
@@ -56,6 +61,13 @@ class DependencyInjection {
         create: (context) => HealthPlatformServiceImpl(),
       ),
       
+      // AI Services
+      Provider<GeminiAiService>(
+        create: (context) => GeminiAiService(
+          apiKey: AiConfig.geminiApiKey,
+        ),
+      ),
+      
       // Repositories
       Provider<UserRepository>(
         create: (context) => UserRepositoryImpl(
@@ -77,7 +89,17 @@ class DependencyInjection {
         create: (context) => MockCommunityRepository(),
       ),
       Provider<AiChatRepository>(
-        create: (context) => MockAiChatRepository(),
+        create: (context) {
+          // Use Gemini implementation if API key is configured, otherwise fallback to mock
+          if (AiConfig.isGeminiConfigured) {
+            return GeminiAiChatRepository(
+              context.read<GeminiAiService>(),
+              context.read<FirestoreService>(),
+            );
+          } else {
+            return MockAiChatRepository();
+          }
+        },
       ),
       
       // Use cases

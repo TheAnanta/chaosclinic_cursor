@@ -218,6 +218,80 @@ class FirestoreService {
     }
   }
 
+  /// Get subcollection documents
+  Future<QuerySnapshot<Map<String, dynamic>>> getSubcollection(
+    String parentCollection,
+    String parentDocId,
+    String subcollection, {
+    String? orderBy,
+    bool descending = false,
+    int? limit,
+  }) async {
+    try {
+      Query<Map<String, dynamic>> query = _firestore
+          .collection(parentCollection)
+          .doc(parentDocId)
+          .collection(subcollection);
+
+      if (orderBy != null) {
+        query = query.orderBy(orderBy, descending: descending);
+      }
+
+      if (limit != null) {
+        query = query.limit(limit);
+      }
+
+      return await query.get();
+    } catch (e) {
+      throw FirestoreException('Failed to get subcollection: $e');
+    }
+  }
+
+  /// Set subcollection document
+  Future<void> setSubcollectionDocument(
+    String parentCollection,
+    String parentDocId,
+    String subcollection,
+    String docId,
+    Map<String, dynamic> data, {
+    bool merge = false,
+  }) async {
+    try {
+      final docRef = _firestore
+          .collection(parentCollection)
+          .doc(parentDocId)
+          .collection(subcollection)
+          .doc(docId);
+
+      if (merge) {
+        await docRef.set(data, SetOptions(merge: true));
+      } else {
+        await docRef.set(data);
+      }
+    } catch (e) {
+      throw FirestoreException('Failed to set subcollection document: $e');
+    }
+  }
+
+  /// Delete subcollection document
+  Future<void> deleteSubcollectionDocument(
+    String parentCollection,
+    String parentDocId,
+    String subcollection,
+    String docId,
+  ) async {
+    try {
+      await _firestore
+          .collection(parentCollection)
+          .doc(parentDocId)
+          .collection(subcollection)
+          .doc(docId)
+          .delete();
+    } catch (e) {
+      throw FirestoreException('Failed to delete subcollection document: $e');
+    }
+  }
+
   /// Batch write operations
   Future<void> batchWrite(List<BatchOperation> operations) async {
     try {
