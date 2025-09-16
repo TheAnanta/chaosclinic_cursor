@@ -5,7 +5,9 @@ import '../core/widgets/common_widgets.dart';
 import '../core/navigation/app_navigation.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/activity.dart';
+import '../../domain/models/community_article.dart';
 import '../profile/profile_screen.dart';
+import '../leaderboard/leaderboard_screen.dart';
 import 'home_view_model.dart';
 
 /// Main home screen with personalized content
@@ -156,21 +158,24 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  'Lv.${viewModel.userScore!.level}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
+                              GestureDetector(
+                                onTap: () => _navigateToLeaderboard(context),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Lv.${viewModel.userScore!.level}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -597,6 +602,14 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  void _navigateToLeaderboard(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const LeaderboardScreen(),
       ),
     );
   }

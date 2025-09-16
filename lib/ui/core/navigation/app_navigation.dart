@@ -8,6 +8,7 @@ import '../../activities/bug_smash/bug_smash_screen.dart';
 import '../../activities/breathing_exercises_screen.dart';
 import '../../activities/gratitude/gratitude_screen.dart';
 import '../../emotion_log/emotion_log_screen.dart';
+import '../../community/community_screen.dart';
 import '../../kanha_chat/kanha_chat_screen.dart';
 
 /// Navigation helper for the app
@@ -82,7 +83,11 @@ class AppNavigation {
 
   /// Navigate to community feed (placeholder for future implementation)
   static void navigateToCommunity(BuildContext context) {
-    _showComingSoonSnackBar(context, 'Community feed');
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => const CommunityScreen(),
+      ),
+    );
   }
 
   /// Navigate directly to journal screen
