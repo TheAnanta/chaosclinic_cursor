@@ -1,0 +1,247 @@
+name: Build and Release APK
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.1)'
+        required: true
+        default: '1.0.1'
+      build_number:
+        description: 'Build number (e.g., 2)'
+        required: true
+        default: '2'
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+        
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.3'
+        cache: true
+        
+    - name: Install dependencies
+      run: flutter pub get
+      
+    - name: Set version from input or tag
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          echo "BUILD_NUMBER=${{ github.event.inputs.build_number }}" >> $GITHUB_OUTPUT
+        else
+          # Extract version from tag (remove 'v' prefix)
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=${TAG_VERSION}" >> $GITHUB_OUTPUT
+          # Generate build number from current timestamp
+          echo "BUILD_NUMBER=$(date +%s)" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Update version in pubspec.yaml
+      run: |
+        VERSION="${{ steps.version.outputs.VERSION }}"
+        BUILD_NUMBER="${{ steps.version.outputs.BUILD_NUMBER }}"
+        sed -i "s/version: .*/version: ${VERSION}+${BUILD_NUMBER}/" pubspec.yaml
+        echo "Updated version to: ${VERSION}+${BUILD_NUMBER}"
+        
+        # Verify the version was updated correctly
+        grep "version:" pubspec.yaml
+        
+    - name: Verify Flutter configuration
+      run: |
+        echo "📋 Current Flutter and project info:"
+        flutter --version
+        flutter doctor --android-licenses || true
+        echo "📦 Dependencies:"
+        flutter pub deps --style=tree | head -20
+        
+    - name: Create upload keystore from secret
+      if: env.UPLOAD_KEYSTORE_BASE64 != ''
+      env:
+        UPLOAD_KEYSTORE_BASE64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+      run: |
+        echo "$UPLOAD_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+        
+    - name: Create key.properties for signing
+      if: env.KEYSTORE_PASSWORD != ''
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+      run: |
+        cat > android/key.properties << EOFKEY
+        storePassword=$KEYSTORE_PASSWORD
+        keyPassword=$KEY_PASSWORD
+        keyAlias=$KEY_ALIAS
+        storeFile=upload-keystore.jks
+        EOFKEY
+        
+    - name: Update Android build.gradle.kts for release signing
+      if: env.KEYSTORE_PASSWORD != ''
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+      run: |
+        # Create a backup of the original build.gradle.kts
+        cp android/app/build.gradle.kts android/app/build.gradle.kts.backup
+        
+        # Add signing configuration to build.gradle.kts
+        cat > android/app/build.gradle.kts << 'EOFGRADLE'
+        plugins {
+            id("com.android.application")
+            // START: FlutterFire Configuration
+            id("com.google.gms.google-services")
+            id("com.google.firebase.crashlytics")
+            // END: FlutterFire Configuration
+            id("kotlin-android")
+            // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+            id("dev.flutter.flutter-gradle-plugin")
+        }
+
+        def keystoreProperties = new Properties()
+        def keystorePropertiesFile = rootProject.file('key.properties')
+        if (keystorePropertiesFile.exists()) {
+            keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+        }
+
+        android {
+            namespace = "dev.theananta.chaosclinic"
+            compileSdk = flutter.compileSdkVersion
+            ndkVersion = flutter.ndkVersion
+
+            compileOptions {
+                sourceCompatibility = JavaVersion.VERSION_11
+                targetCompatibility = JavaVersion.VERSION_11
+            }
+
+            kotlinOptions {
+                jvmTarget = JavaVersion.VERSION_11.toString()
+            }
+
+            signingConfigs {
+                release {
+                    if (keystorePropertiesFile.exists()) {
+                        keyAlias keystoreProperties['keyAlias']
+                        keyPassword keystoreProperties['keyPassword']
+                        storeFile file(keystoreProperties['storeFile'])
+                        storePassword keystoreProperties['storePassword']
+                    }
+                }
+            }
+
+            defaultConfig {
+                // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+                applicationId = "dev.theananta.chaosclinic"
+                // You can update the following values to match your application needs.
+                // For more information, see: https://flutter.dev/to/review-gradle-config.
+                minSdk = 26
+                targetSdk = flutter.targetSdkVersion
+                versionCode = flutter.versionCode
+                versionName = flutter.versionName
+            }
+
+            buildTypes {
+                release {
+                    if (keystorePropertiesFile.exists()) {
+                        signingConfig = signingConfigs.release
+                    } else {
+                        // Fallback to debug signing if no keystore
+                        signingConfig = signingConfigs.getByName("debug")
+                    }
+                }
+            }
+        }
+
+        flutter {
+            source = "../.."
+        }
+        EOFGRADLE
+        
+    - name: Build APK
+      run: flutter build apk --release
+      
+    - name: Get APK path and info
+      id: apk_info
+      run: |
+        APK_PATH=$(find build/app/outputs/flutter-apk -name "*.apk" -type f | head -1)
+        APK_NAME=$(basename "$APK_PATH")
+        VERSION="${{ steps.version.outputs.VERSION }}"
+        BUILD_NUMBER="${{ steps.version.outputs.BUILD_NUMBER }}"
+        
+        # Create a more descriptive filename
+        NEW_APK_NAME="chaosclinic-v${VERSION}-${BUILD_NUMBER}.apk"
+        
+        echo "APK_PATH=$APK_PATH" >> $GITHUB_OUTPUT
+        echo "APK_NAME=$NEW_APK_NAME" >> $GITHUB_OUTPUT
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+        
+        # Copy APK with new name
+        cp "$APK_PATH" "$NEW_APK_NAME"
+        echo "APK_FINAL_PATH=$NEW_APK_NAME" >> $GITHUB_OUTPUT
+        
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.apk_info.outputs.VERSION }}
+        release_name: Chaos Clinic v${{ steps.apk_info.outputs.VERSION }}
+        body: |
+          ## Chaos Clinic v${{ steps.apk_info.outputs.VERSION }}
+          
+          ### 📱 Android APK Release
+          
+          **Version:** ${{ steps.apk_info.outputs.VERSION }}
+          **Build:** ${{ steps.apk_info.outputs.BUILD_NUMBER }}
+          **Built:** ${{ github.run_id }}
+          
+          ### 🚀 Features
+          - Mental health and emotional wellbeing app
+          - AI assistant "Kanha" for personalized support
+          - Mood tracking and analytics
+          - Trusted contact system
+          - Mini-games and activities for stress relief
+          
+          ### 📦 Installation
+          1. Download the APK file below
+          2. Enable "Install from unknown sources" on your Android device
+          3. Install the APK
+          
+          ### 🔒 Security
+          This APK is signed and safe to install.
+          
+        draft: false
+        prerelease: false
+        
+    - name: Upload APK to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ steps.apk_info.outputs.APK_FINAL_PATH }}
+        asset_name: ${{ steps.apk_info.outputs.APK_NAME }}
+        asset_content_type: application/vnd.android.package-archive
+        
+    - name: Upload APK as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: chaosclinic-apk-v${{ steps.apk_info.outputs.VERSION }}
+        path: ${{ steps.apk_info.outputs.APK_FINAL_PATH }}
+        retention-days: 90
