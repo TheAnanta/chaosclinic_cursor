@@ -187,27 +187,39 @@ class BugSmashViewModel extends ChangeNotifier {
   
   /// Spawn a new bug
   void _spawnBug() {
-    final bug = BugSmashGame.generateRandomBug(_screenSize);
+    final bug = BugSmashGame.generateRandomBug(_screenSize, _bugs);
     _bugs.add(bug);
     notifyListeners();
   }
-  
-  /// Move all bugs
+
+  /// Move all bugs with collision avoidance
   void _moveBugs() {
     final bugsToRemove = <Bug>[];
+    const bugSize = 60.0;
+    const minDistance = 70.0;
     
     for (int i = 0; i < _bugs.length; i++) {
       final bug = _bugs[i];
       if (bug.isSmashed) continue;
       
-      // Move bug randomly
+      // Move bug randomly but avoid collisions
       final random = Random();
-      final newX = (bug.position.dx + (random.nextDouble() - 0.5) * bug.speed * 20)
-          .clamp(0.0, _screenSize.width - 60);
-      final newY = (bug.position.dy + (random.nextDouble() - 0.5) * bug.speed * 20)
-          .clamp(0.0, _screenSize.height - 200);
+      Offset newPosition;
+      int attempts = 0;
+      const maxAttempts = 10;
       
-      _bugs[i] = bug.copyWith(position: Offset(newX, newY));
+      do {
+        final deltaX = (random.nextDouble() - 0.5) * bug.speed * 20;
+        final deltaY = (random.nextDouble() - 0.5) * bug.speed * 20;
+        
+        newPosition = Offset(
+          (bug.position.dx + deltaX).clamp(0.0, _screenSize.width - bugSize),
+          (bug.position.dy + deltaY).clamp(0.0, _screenSize.height - 200),
+        );
+        attempts++;
+      } while (attempts < maxAttempts && _wouldCollide(newPosition, i, minDistance));
+      
+      _bugs[i] = bug.copyWith(position: newPosition);
       
       // Check if bug should disappear (timeout)
       if (random.nextDouble() < 0.01) { // 1% chance per tick
@@ -233,6 +245,19 @@ class BugSmashViewModel extends ChangeNotifier {
     if (bugsToRemove.isNotEmpty) {
       notifyListeners();
     }
+  }
+
+  /// Check if a position would collide with other bugs
+  bool _wouldCollide(Offset position, int excludeIndex, double minDistance) {
+    for (int i = 0; i < _bugs.length; i++) {
+      if (i == excludeIndex || _bugs[i].isSmashed) continue;
+      
+      final distance = (position - _bugs[i].position).distance;
+      if (distance < minDistance) {
+        return true;
+      }
+    }
+    return false;
   }
   
   /// Check for proactive check-in triggers
