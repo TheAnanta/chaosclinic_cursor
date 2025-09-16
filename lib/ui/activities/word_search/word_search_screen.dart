@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/themes/app_theme.dart';
@@ -67,7 +69,7 @@ class _WordSearchContent extends StatelessWidget {
             Expanded(
               child: _buildGameArea(context, viewModel),
             ),
-            _buildWordsList(viewModel),
+            _buildWordsList(context, viewModel),
           ],
         ),
         if (viewModel.state == WordSearchGameState.checkinDialog)
@@ -183,6 +185,7 @@ class _WordSearchContent extends StatelessWidget {
             final position = GridPosition(row, col);
             
             return _buildGridCell(
+              context,
               game.grid[row][col],
               position,
               viewModel,
@@ -195,6 +198,7 @@ class _WordSearchContent extends StatelessWidget {
   }
 
   Widget _buildGridCell(
+    BuildContext context,
     String letter,
     GridPosition position,
     WordSearchViewModel viewModel,
@@ -246,7 +250,7 @@ class _WordSearchContent extends StatelessWidget {
     return Colors.white;
   }
 
-  Widget _buildWordsList(WordSearchViewModel viewModel) {
+  Widget _buildWordsList(BuildContext context, WordSearchViewModel viewModel) {
     if (viewModel.game == null) return const SizedBox.shrink();
 
     return Container(
@@ -503,5 +507,3 @@ class _WordSearchContent extends StatelessWidget {
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }
-
-import 'dart:math' as math;

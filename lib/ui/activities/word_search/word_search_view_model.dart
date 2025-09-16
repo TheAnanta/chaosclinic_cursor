@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
 import 'word_search_game.dart';
 
 enum WordSearchGameState {
@@ -294,6 +297,3 @@ class WordSearchViewModel extends ChangeNotifier {
     super.dispose();
   }
 }
-
-/// Import math for score calculation
-import 'dart:math' as math;
