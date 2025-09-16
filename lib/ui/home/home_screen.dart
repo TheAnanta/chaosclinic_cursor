@@ -211,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icons.self_improvement,
             title: 'Activities',
             color: AppTheme.calmColor,
-            onTap: () {}, // Navigate to activities
+            onTap: viewModel.onActivitiesTapped,
           ),
         ),
         const SizedBox(width: AppTheme.spacingM),
@@ -220,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icons.article_outlined,
             title: 'Community',
             color: AppTheme.secondaryColor,
-            onTap: () {}, // Navigate to community
+            onTap: viewModel.onCommunityTapped,
           ),
         ),
       ],
