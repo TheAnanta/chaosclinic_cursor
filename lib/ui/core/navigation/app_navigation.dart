@@ -5,6 +5,8 @@ import '../../activities/journaling/journal_screen.dart';
 import '../../activities/word_search/word_search_screen.dart';
 import '../../activities/meditation/meditation_screen.dart';
 import '../../activities/bug_smash/bug_smash_screen.dart';
+import '../../activities/breathing_exercises_screen.dart';
+import '../../emotion_log/emotion_log_screen.dart';
 import '../../kanha_chat/kanha_chat_screen.dart';
 
 /// Navigation helper for the app
@@ -33,9 +35,17 @@ class AppNavigation {
       case 'meditation':
         screen = const MeditationScreen();
         break;
+      case 'breathing':
+      case 'breathing_exercises':
+        screen = const BreathingExercisesScreen();
+        break;
       case 'bugsmash':
       case 'bug_smash':
         screen = const BugSmashScreen();
+        break;
+      case 'emotion_log':
+      case 'emotions':
+        screen = const EmotionLogScreen();
         break;
       default:
         _showComingSoonSnackBar(context, 'Activity: $activityId');
