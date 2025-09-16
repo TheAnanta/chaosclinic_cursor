@@ -32,10 +32,13 @@ A comprehensive Flutter application for emotional wellbeing, featuring AI assist
 
 ### 🔮 Planned Features
 
-#### AI Assistant "Kanha"
-- Personalized emotional support chat
-- Context-aware responses based on user history
-- Proactive check-ins during stressful activities
+#### AI Assistant "Kanha" ✅
+- **Gemini 2.5 Flash Integration**: Production-ready AI chat with Google's latest model
+- **Grounded Mental Health Responses**: Context-aware responses specifically tailored for emotional wellbeing
+- **Conversation History**: Persistent chat history stored in Firestore with context awareness
+- **Smart Fallback System**: Graceful degradation to helpful responses when API is unavailable
+- **Safety & Ethics**: Built-in content filtering and crisis intervention guidelines
+- **Personalized Conversation Starters**: AI-generated conversation prompts based on user context
 
 #### Emotion Logging & Tracking
 - Comprehensive mood tracking with intensity levels
@@ -192,12 +195,17 @@ dev_dependencies:
 1. Clone the repository
 2. Run `flutter pub get`
 3. Configure Firebase for your project
-4. Run `flutter packages pub run build_runner build` for code generation
-5. Run `flutter run`
+4. **Set up Gemini AI integration** (see [GEMINI_SETUP.md](GEMINI_SETUP.md))
+5. Run `flutter packages pub run build_runner build` for code generation
+6. Run `flutter run`
+
+## 📖 Documentation
+
+- **[Setup Guide](GEMINI_SETUP.md)**: Complete guide for setting up Gemini AI integration
+- **[Architecture](docs/GEMINI_ARCHITECTURE.md)**: Technical architecture and implementation details
+- **[APK Build Guide](APK_BUILD_SETUP.md)**: Instructions for building and releasing APKs
 
 ## 📱 APK Building & Releases
-
-### Download Ready-to-Install APK
 Check the [Releases](../../releases) section for the latest Android APK files. These are automatically built and signed for easy installation.
 
 ### Building Your Own APK
@@ -235,8 +243,9 @@ See [APK_BUILD_SETUP.md](APK_BUILD_SETUP.md) for detailed instructions.
 - [x] Material 3 design system implementation
 - [x] Clean code architecture with MVVM pattern
 
-### Phase 2: Core Features
-- [x] AI chat integration with Gemini
+### Phase 2: Core Features ✅
+- [x] AI chat integration with Gemini 2.5 Flash
+- [x] Grounded responses with mental health context
 - [x] Comprehensive emotion logging
 - [x] Activity implementation
 - [x] Health platform integration
