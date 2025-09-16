@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../core/themes/app_theme.dart';
 import '../core/widgets/common_widgets.dart';
+import '../core/navigation/app_navigation.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/activity.dart';
 import '../../domain/models/community_article.dart';
@@ -195,33 +196,50 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildQuickActions(HomeViewModel viewModel) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildQuickActionCard(
-            icon: Icons.favorite_border,
-            title: 'Log Mood',
-            color: AppTheme.joyColor,
-            onTap: () => _showQuickMoodDialog(viewModel),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickActionCard(
+                icon: Icons.favorite_border,
+                title: 'Log Mood',
+                color: AppTheme.joyColor,
+                onTap: () => _showQuickMoodDialog(viewModel),
+              ),
+            ),
+            const SizedBox(width: AppTheme.spacingM),
+            Expanded(
+              child: _buildQuickActionCard(
+                icon: Icons.self_improvement,
+                title: 'Activities',
+                color: AppTheme.calmColor,
+                onTap: viewModel.onActivitiesTapped,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: AppTheme.spacingM),
-        Expanded(
-          child: _buildQuickActionCard(
-            icon: Icons.self_improvement,
-            title: 'Activities',
-            color: AppTheme.calmColor,
-            onTap: viewModel.onActivitiesTapped,
-          ),
-        ),
-        const SizedBox(width: AppTheme.spacingM),
-        Expanded(
-          child: _buildQuickActionCard(
-            icon: Icons.article_outlined,
-            title: 'Community',
-            color: AppTheme.secondaryColor,
-            onTap: viewModel.onCommunityTapped,
-          ),
+        const SizedBox(height: AppTheme.spacingM),
+        Row(
+          children: [
+            Expanded(
+              child: _buildQuickActionCard(
+                icon: Icons.analytics,
+                title: 'Analytics',
+                color: AppTheme.primaryColor,
+                onTap: () => _navigateToEmotionLog(context),
+              ),
+            ),
+            const SizedBox(width: AppTheme.spacingM),
+            Expanded(
+              child: _buildQuickActionCard(
+                icon: Icons.article_outlined,
+                title: 'Community',
+                color: AppTheme.secondaryColor,
+                onTap: viewModel.onCommunityTapped,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -517,6 +535,10 @@ class _HomeScreenState extends State<HomeScreen> {
       label: const Text('Quick Mood'),
       backgroundColor: AppTheme.primaryColor,
     );
+  }
+
+  void _navigateToEmotionLog(BuildContext context) {
+    AppNavigation.navigateToEmotionLog(context);
   }
 
   void _showQuickMoodDialog(HomeViewModel viewModel) {

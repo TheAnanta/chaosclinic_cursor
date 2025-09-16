@@ -116,6 +116,15 @@ class AppNavigation {
     );
   }
 
+  /// Navigate directly to emotion log screen
+  static void navigateToEmotionLog(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => const EmotionLogScreen(),
+      ),
+    );
+  }
+
   /// Show a "coming soon" snack bar
   static void _showComingSoonSnackBar(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
