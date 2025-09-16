@@ -6,6 +6,7 @@ import '../../activities/word_search/word_search_screen.dart';
 import '../../activities/meditation/meditation_screen.dart';
 import '../../activities/bug_smash/bug_smash_screen.dart';
 import '../../activities/breathing_exercises_screen.dart';
+import '../../activities/gratitude/gratitude_screen.dart';
 import '../../emotion_log/emotion_log_screen.dart';
 import '../../kanha_chat/kanha_chat_screen.dart';
 
@@ -27,6 +28,10 @@ class AppNavigation {
       case 'journal':
       case 'journaling':
         screen = const JournalScreen();
+        break;
+      case 'gratitude':
+      case 'gratitude_practice':
+        screen = const GratitudeScreen();
         break;
       case 'wordsearch':
       case 'word_search':
@@ -112,6 +117,15 @@ class AppNavigation {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (context) => const BugSmashScreen(),
+      ),
+    );
+  }
+
+  /// Navigate directly to gratitude screen
+  static void navigateToGratitude(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => const GratitudeScreen(),
       ),
     );
   }

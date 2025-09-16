@@ -4,6 +4,7 @@ import '../word_search/word_search_screen.dart';
 import '../bug_smash/bug_smash_screen.dart';
 import '../meditation/meditation_screen.dart';
 import '../journaling/journal_screen.dart';
+import '../gratitude/gratitude_screen.dart';
 import '../../emotion_log/emotion_log_screen.dart';
 
 /// Activities dashboard showing all available activities
@@ -121,7 +122,7 @@ class ActivitiesDashboard extends StatelessWidget {
                   color: AppTheme.joyColor,
                   estimatedTime: '3-5 min',
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const JournalScreen()),
+                    MaterialPageRoute(builder: (context) => const GratitudeScreen()),
                   ),
                 ),
               ],

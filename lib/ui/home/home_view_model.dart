@@ -4,6 +4,7 @@ import '../../domain/use_cases/log_emotion_use_case.dart';
 import '../../domain/models/user_profile.dart';
 import '../../domain/models/activity.dart';
 import '../../domain/models/community_article.dart';
+import '../../domain/models/user_score.dart';
 
 /// Home screen state enumeration
 enum HomeState {
@@ -46,6 +47,7 @@ class HomeViewModel extends ChangeNotifier {
   String _aiWelcomeMessage = 'Hi! I\'m Kanha, your companion for emotional wellbeing.';
   List<Activity> _recommendedActivities = [];
   List<CommunityArticle> _featuredArticles = [];
+  UserScore? _userScore;
 
   // Quick emotion logging
   bool _isLoggingEmotion = false;
@@ -61,6 +63,7 @@ class HomeViewModel extends ChangeNotifier {
   List<CommunityArticle> get featuredArticles => _featuredArticles;
   bool get isLoggingEmotion => _isLoggingEmotion;
   String? get emotionLogError => _emotionLogError;
+  UserScore? get userScore => _userScore;
 
   /// Load home screen data
   Future<void> _loadHomeData() async {
@@ -75,6 +78,13 @@ class HomeViewModel extends ChangeNotifier {
       _aiWelcomeMessage = homeData.aiWelcomeMessage;
       _recommendedActivities = homeData.recommendedActivities;
       _featuredArticles = homeData.featuredArticles;
+      
+      // TODO: Load user score from repository
+      _userScore = const UserScore(
+        userId: '',
+        totalScore: 0,
+        level: 1,
+      );
 
       _setState(HomeState.loaded);
     } catch (e) {
