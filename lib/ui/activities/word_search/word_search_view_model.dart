@@ -97,18 +97,13 @@ class WordSearchViewModel extends ChangeNotifier {
     _startInactivityTimer();
     notifyListeners();
   }
-    _startTimer();
-    _startCheckInTimer();
-    notifyListeners();
-  }
 
   /// Pause the game
   void pauseGame() {
     if (_state == WordSearchGameState.playing) {
       _state = WordSearchGameState.paused;
-      _stopwatch.stop();
-      _timer?.cancel();
-      _checkInTimer?.cancel();
+      _countdownTimer?.cancel();
+      _inactivityTimer?.cancel();
       notifyListeners();
     }
   }
@@ -117,8 +112,8 @@ class WordSearchViewModel extends ChangeNotifier {
   void resumeGame() {
     if (_state == WordSearchGameState.paused) {
       _state = WordSearchGameState.playing;
-      _startTimer();
-      _startCheckInTimer();
+      _startCountdown();
+      _startInactivityTimer();
       notifyListeners();
     }
   }
@@ -127,7 +122,10 @@ class WordSearchViewModel extends ChangeNotifier {
   void startSelection(GridPosition position) {
     if (_state != WordSearchGameState.playing) return;
     
+    _recordActivity();
     _currentSelection = [position];
+    _highlightedPositions = {position};
+    _currentWord = _game!.grid[position.row][position.col];
     notifyListeners();
   }
 
@@ -135,14 +133,53 @@ class WordSearchViewModel extends ChangeNotifier {
   void updateSelection(GridPosition position) {
     if (_state != WordSearchGameState.playing || _currentSelection.isEmpty) return;
     
+    _recordActivity();
     final startPos = _currentSelection.first;
     _currentSelection = _getPathBetween(startPos, position);
+    _highlightedPositions = _currentSelection.toSet();
+    _currentWord = _currentSelection.map((pos) => _game!.grid[pos.row][pos.col]).join();
     notifyListeners();
   }
 
-  /// End selection
-  void endSelection() {
+  /// End selection and validate word
+  void endSelection() async {
     if (_state != WordSearchGameState.playing || _currentSelection.isEmpty) return;
+    
+    _recordActivity();
+    
+    // Check if word is in our predefined list first
+    final foundWord = _checkWordFound();
+    if (foundWord != null) {
+      _markWordAsFound(foundWord);
+      _score += _calculateScore(foundWord);
+      
+      if (isGameCompleted) {
+        _completeGame();
+      }
+    } else if (_currentWord.length >= 3) {
+      // Check if it's a valid English word
+      _isValidatingWord = true;
+      notifyListeners();
+      
+      final isValid = await _game!.isValidEnglishWord(_currentWord);
+      _isValidatingWord = false;
+      
+      if (isValid) {
+        // Valid English word but not in our list - give partial points
+        _score += _currentWord.length * 2;
+        _foundPositions.addAll(_currentSelection);
+      } else {
+        _wrongSelections++;
+      }
+    } else {
+      _wrongSelections++;
+    }
+    
+    _currentSelection = [];
+    _highlightedPositions = {};
+    _currentWord = '';
+    notifyListeners();
+  }
     
     final foundWord = _checkWordFound();
     if (foundWord != null) {
